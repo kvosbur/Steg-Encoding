@@ -6,16 +6,31 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 class Encryption:
 
-    def __init__(self, iv=None, password_salt=None, tag=None):
+    def __init__(self, iv=None, password_salt=None):
         self.iv = iv or os.urandom(12)
         self.password_salt = password_salt or os.urandom(16)
-        self._tag = tag
+        self._tag = None
         self._cipher = None
         self._key = None
         self._encryptor = None
         self._decryptor = None
 
-    def create_cipher(self):
+    @staticmethod
+    def get_iv_length():
+        return 12
+
+    @staticmethod
+    def get_salt_length():
+        return 16
+
+    @staticmethod
+    def get_tag_length():
+        return 16
+
+    def set_tag(self, tag):
+        self._tag = tag
+
+    def _create_cipher(self):
         if self._key is None:
             raise Exception('Key has yet to be made')
         if self._tag is not None:
@@ -34,7 +49,7 @@ class Encryption:
 
     def encrypt(self, pt):
         if self._cipher is None:
-            self.create_cipher()
+            self._create_cipher()
             self._encryptor = self._cipher.encryptor()
 
         return self._encryptor.update(pt)
@@ -47,7 +62,7 @@ class Encryption:
         if self._cipher is None:
             if self._tag is None:
                 raise Exception('Class must be intstantiated with tag if decrypting')
-            self.create_cipher()
+            self._create_cipher()
             self._decryptor = self._cipher.decryptor()
 
         return self._decryptor.update(ct)
@@ -56,7 +71,7 @@ class Encryption:
         self._decryptor.finalize()
 
 
-if __name__ == "__main":
+if __name__ == "__main__":
     given_password = b'super secure password'
     plaintext = b'super secure message'
     print(plaintext)
