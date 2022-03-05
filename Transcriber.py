@@ -1,23 +1,22 @@
 from PIL import Image
 import queue
-from os import path
+from os import path, listdir
+from StegImage import StegImage
 
-
-def overwrite_pixel_value(prev_value, value_to_hide):
-    return (prev_value & 252) | value_to_hide
 
 
 class Transcriber:
 
-    def __init__(self, image_path):
-        if not path.exists(image_path):
+    def __init__(self, mode, image_folder_path, destination_folder_path):
+        if not path.exists(image_folder_path):
             raise Exception("Image path is incorrect or does not exist!")
-        self.image_path = image_path
-        self._image = Image.open(image_path)
-        self._pixels = self._image.load()
+        # self._iamge = Image.open(self.image_path)
+        # self._pixels = self._image.load()
+        self.mode = mode
+        self.source_image_folder_path = image_folder_path
+        self.destination_folder_path = destination_folder_path
         self._encoding_queue = queue.Queue()
-        self._x = 0
-        self._y = 0
+        
 
     @staticmethod
     def bytes_for_size(amount):
@@ -29,33 +28,53 @@ class Transcriber:
         # assuming that I am only changing rgb and not rgba
         return x * y * 3
 
-    def _set_next_pixels(self):
-        while self._encoding_queue.qsize() >= 3:
-            prev_r, prev_g, prev_b = self._pixels[self._x, self._y]
-            # print(self._x)
-            # print(self._y)
-            # print(self._pixels[self._x, self._y])
+    def init_images(self):
+        self.images = [StegImage(path.join(self.source_image_folder_path, image), path.join(self.destination_folder_path, image), self.mode) for image in listdir(self.source_image_folder_path)]
+        self.current_image_index = 0
+        self.current_image = self.images[self.current_image_index]
+        from pprint import pprint
+        pprint(vars(self))
+        print((self.current_image.bits_that_can_store(), self.total_bit_length))
+        self.current_image.init_encoding(min(self.current_image.bits_that_can_store(), self.total_bit_length), self.current_image_index)
 
-            next_value = (overwrite_pixel_value(prev_r, self._encoding_queue.get()),
-                          overwrite_pixel_value(prev_g, self._encoding_queue.get()),
-                          overwrite_pixel_value(prev_b, self._encoding_queue.get()))
-            self._pixels[self._x, self._y] = next_value
-            # print(next_value)
-            self._y += 1
-            if self._y == self._image.size[1]:
-                self._x += 1
-                self._y = 0
+    def can_fit_bytes(self, bytes_to_save):
+        self.total_bit_length = bytes_to_save * 8
+        self.init_images()
 
-    def set_encoding(self, data_to_encode):
-        for byte in data_to_encode:
+        can_fit = sum([image.bits_that_can_store() for image in self.images])
+        return bytes_to_save * 8 <= can_fit
+
+
+    def _add_data_to_queue(self, data):
+        for byte in data:
             self._encoding_queue.put(byte >> 6)
             self._encoding_queue.put(byte >> 4 & 3)
             self._encoding_queue.put(byte >> 2 & 3)
             self._encoding_queue.put(byte & 3)
-            self._set_next_pixels()
+    
 
-    def finish_encoding(self, final_path):
-        while self._encoding_queue.qsize() != 3:
-            self._encoding_queue.put(0)
-        self._set_next_pixels()
-        self._image.save(final_path)
+    def set_encoding(self, data_to_encode):
+        bits_to_store = len(data_to_encode) * 8
+        self._add_data_to_queue(data_to_encode)
+        
+        while bits_to_store > 0:
+            image_can_store = self.current_image.bits_that_can_store()
+            if bits_to_store > image_can_store:
+                self.current_image.set_next_pixels(self._encoding_queue)
+                self.current_image.finish_encoding()
+
+                # udpate lengths
+                bits_to_store -= image_can_store
+                self.total_bit_length -= image_can_store
+
+                # iterate current image
+                self.current_image_index += 1
+                self.current_image = self.images[self.current_image_index]
+                self.current_image.init_encoding(min(image_can_store, self.total_bit_length), self.current_image_index)
+            else:
+                self.current_image.set_next_pixels(self._encoding_queue)
+                bits_to_store = 0
+
+    def finish_encoding(self):
+        self.current_image.finish_encoding(self._encoding_queue)
+
