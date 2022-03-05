@@ -2,6 +2,10 @@ from Encryption import Encryption as GCM
 from Transcriber import Transcriber
 import shutil
 import os
+import datetime
+import cProfile
+import pstats
+from pstats import SortKey
 
 
 class Encoder:
@@ -63,5 +67,20 @@ class Encoder:
         #     pass
 
 if __name__ == "__main__":
+    
+    
+
+    before = datetime.datetime.now()
     enc = Encoder(b'password', './source_images', './destination_images')
+    # profile_result_file = "results"
+    # print("Running profiler")
+    # cProfile.run("enc.encode_file('source_images.zip')", profile_result_file)
+
+    # p = pstats.Stats(profile_result_file)
+    # p.strip_dirs().sort_stats(SortKey.CUMULATIVE).print_stats()
+
     enc.encode_file('source_images.zip')
+
+    after = datetime.datetime.now()
+    total = after - before
+    print(f"total time taken: {total}")

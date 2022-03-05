@@ -1,6 +1,10 @@
 from Encryption import Encryption as GCM
 from Extractor import Extractor
 from Transcriber import Transcriber
+import cProfile
+import pstats
+from pstats import SortKey
+import datetime
 
 
 class Decoder:
@@ -33,8 +37,6 @@ class Decoder:
 
     def get_tag(self, raw_data):
         tag = bytes(raw_data[-GCM.get_tag_length():])
-        print(tag)
-        print(len(tag))
         self._gcm.set_tag(tag)
 
     def decrypt_and_save_data(self, raw_data, destination_file):
@@ -60,5 +62,18 @@ class Decoder:
 
 
 if __name__ == "__main__":
+    before = datetime.datetime.now()
     enc = Decoder(b'password', 'destination_images')
+    # profile_result_file = "results"
+    # print("Running profiler")
+    # cProfile.run("enc.decode_file('output')", profile_result_file)
+
+    # p = pstats.Stats(profile_result_file)
+    # p.strip_dirs().sort_stats(SortKey.CUMULATIVE).print_stats()
+
     enc.decode_file('output')
+
+    after = datetime.datetime.now()
+    total = after - before
+    print(f"total time taken: {total}")
+    
