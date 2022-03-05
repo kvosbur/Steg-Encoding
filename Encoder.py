@@ -40,31 +40,12 @@ class Encoder:
             print("Not enough images to store the necessary data")
             exit()
 
-
-        # allowed_space = (self.transcriber.get_total_pixels() * 2) // 8
-        # length_space = Transcriber.bytes_for_size(allowed_space)
-
         print("full length", full_length, full_length * 8)
 
         self.transcriber.set_encoding(header)
         self.transcriber.set_encoding(encrypted)
         self.transcriber.set_encoding(tag)
         self.transcriber.finish_encoding()
-
-        # if full_length < allowed_space and full_length + length_space < allowed_space:
-        #     print('1')
-        #     length_in_bytes = (full_length + length_space).to_bytes(length_space, "big")
-        #     header += length_in_bytes
-        #     self.transcriber.set_encoding(header)
-        #     self.transcriber.set_encoding(encrypted)
-        #     self.transcriber.set_encoding(tag)
-        #     self.transcriber.finish_encoding('test_path.png')
-        # elif full_length < allowed_space:
-        #     print('3')
-        #     pass
-        # else:
-        #     print('2')
-        #     pass
 
 if __name__ == "__main__":
     

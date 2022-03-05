@@ -47,6 +47,7 @@ class StegImage:
     def init_encoding(self, bit_length_to_store, image_number):
         # print("init", self.source_image_path, image_number)
         self._image = Image.open(self.source_image_path)
+        self.size_x, self.size_y = self._image.size
         self._pixels = self._image.load()
         self.bit_length_to_store = bit_length_to_store
         # print("amount to store", bit_length_to_store)
@@ -59,10 +60,10 @@ class StegImage:
 
     def increment(self, x, y):
         y += 1
-        if y == self._image.size[1]:
+        if y == self.size_y:
             x += 1
             y = 0
-            if x == self._image.size[0]:
+            if x == self.size_x:
                 return None, None
         return x,y
 
@@ -71,8 +72,8 @@ class StegImage:
             return byte_index
         print("DOING OFFSET WORK")
         pixel_start = ((self.bits_stored + header_offset) // 6)
-        pixel_x = pixel_start // self._image.size[1]
-        pixel_y = pixel_start % self._image.size[1]
+        pixel_x = pixel_start // self.size_y
+        pixel_y = pixel_start % self.size_y
         if (self.bits_stored % 6) // 2 != 0:
             print("ASSUMPTION BROKEN")
             print(self.bits_stored)
@@ -110,8 +111,8 @@ class StegImage:
     def encode_data(self, data, byte_index, byte_offset, header_offset = 72):
         byte_index = self.initial_offset(data, byte_index, byte_offset)
         pixel_start = ((self.bits_stored + header_offset) // 6)
-        pixel_x = pixel_start // self._image.size[1]
-        pixel_y = pixel_start % self._image.size[1]
+        pixel_x = pixel_start // self.size_y
+        pixel_y = pixel_start % self.size_y
         pixel_offset = (self.bits_stored % 6) // 2
         if self.bits_stored % 8 != 0:
             print("NOT GOING TO WORK")
@@ -126,17 +127,24 @@ class StegImage:
             fourth = byte & 3
             prev_r, prev_g, prev_b = self._pixels[pixel_x, pixel_y]
             if pixel_offset == 0:
-                next_value = (overwrite_pixel_value(prev_r, first),
-                          overwrite_pixel_value(prev_g, second),
-                          overwrite_pixel_value(prev_b, third))
+                next_value = ((prev_r & 252) | first,
+                          (prev_g & 252) | second,
+                          (prev_b & 252) | third)
                 self._pixels[pixel_x, pixel_y] = next_value
-                pixel_x, pixel_y = self.increment(pixel_x, pixel_y)
-                if pixel_x is None:
-                    self.bits_stored += 6
-                    return 2
+                # pixel_x, pixel_y = self.increment(pixel_x, pixel_y)  # (inlining)
+                pixel_y += 1
+                if pixel_y == self.size_y:
+                    pixel_x += 1
+                    pixel_y = 0
+                    if pixel_x == self.size_x:
+                        self.bits_stored += 6
+                        return 2
+                # if pixel_x is None:
+                #     self.bits_stored += 6
+                #     return 2
 
                 prev_r, prev_g, prev_b = self._pixels[pixel_x, pixel_y]
-                next_value = (overwrite_pixel_value(prev_r, fourth),
+                next_value = ((prev_r & 252) | fourth,
                           prev_g,
                           prev_b)
                 self._pixels[pixel_x, pixel_y] = next_value
@@ -144,17 +152,24 @@ class StegImage:
 
             elif pixel_offset == 1:
                 next_value = (prev_r,
-                          overwrite_pixel_value(prev_g, first),
-                          overwrite_pixel_value(prev_b, second))
+                          (prev_g & 252) | first,
+                          (prev_b & 252) | second)
                 self._pixels[pixel_x, pixel_y] = next_value
-                pixel_x, pixel_y = self.increment(pixel_x, pixel_y)
-                if pixel_x is None:
-                    self.bits_stored += 4
-                    return 4
+                # pixel_x, pixel_y = self.increment(pixel_x, pixel_y)  # (inlining)
+                pixel_y += 1
+                if pixel_y == self.size_y:
+                    pixel_x += 1
+                    pixel_y = 0
+                    if pixel_x == self.size_x:
+                        self.bits_stored += 4
+                        return 4
+                # if pixel_x is None:
+                #     self.bits_stored += 4
+                #     return 4
 
                 prev_r, prev_g, prev_b = self._pixels[pixel_x, pixel_y]
-                next_value = (overwrite_pixel_value(prev_r, third),
-                          overwrite_pixel_value(prev_g, fourth),
+                next_value = ((prev_r & 252) | third,
+                          (prev_g & 252) | fourth,
                           prev_b)
                 self._pixels[pixel_x, pixel_y] = next_value
                 pixel_offset = 2
@@ -162,20 +177,33 @@ class StegImage:
             elif pixel_offset == 2:
                 next_value = (prev_r,
                           prev_g,
-                          overwrite_pixel_value(prev_b, first))
+                          (prev_b & 252) | first)
                 self._pixels[pixel_x, pixel_y] = next_value
-                pixel_x, pixel_y = self.increment(pixel_x, pixel_y)
-                if pixel_x is None:
-                    self.bits_stored += 2
-                    return 6
+                # pixel_x, pixel_y = self.increment(pixel_x, pixel_y)  # (inlining)
+                pixel_y += 1
+                if pixel_y == self.size_y:
+                    pixel_x += 1
+                    pixel_y = 0
+                    if pixel_x == self.size_x:
+                        self.bits_stored += 2
+                        return 6
+                # if pixel_x is None:
+                #     self.bits_stored += 2
+                #     return 6
 
                 prev_r, prev_g, prev_b = self._pixels[pixel_x, pixel_y]
-                next_value = (overwrite_pixel_value(prev_r, second),
-                          overwrite_pixel_value(prev_g, third),
-                          overwrite_pixel_value(prev_b, fourth))
+                next_value = ((prev_r & 252) | second,
+                          (prev_g & 252) | third,
+                          (prev_b & 252) | fourth)
                 self._pixels[pixel_x, pixel_y] = next_value
                 pixel_offset = 0
-                pixel_x, pixel_y = self.increment(pixel_x, pixel_y)
+                # pixel_x, pixel_y = self.increment(pixel_x, pixel_y)  # (inlining)
+                pixel_y += 1
+                if pixel_y == self.size_y:
+                    pixel_x += 1
+                    pixel_y = 0
+                    if pixel_x == self.size_x:
+                        return 0
 
             self.bits_stored += 8
             if pixel_x is None:

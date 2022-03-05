@@ -28,9 +28,9 @@ class Transcriber:
         return x * y * 3
 
     def init_images(self):
-        self.images = [StegImage(path.join(self.source_image_folder_path, image), path.join(self.destination_folder_path, image), self.mode) for image in listdir(self.source_image_folder_path)]
-        # self.images = [StegImage(path.join(self.source_image_folder_path, image), path.join(self.destination_folder_path, image), self.mode) for image in ["my-hero.jpeg", "demon-slayer.jpeg"]]
-        random.shuffle(self.images)
+        # self.images = [StegImage(path.join(self.source_image_folder_path, image), path.join(self.destination_folder_path, image), self.mode) for image in listdir(self.source_image_folder_path)]
+        self.images = [StegImage(path.join(self.source_image_folder_path, image), path.join(self.destination_folder_path, image), self.mode) for image in ["my-hero.jpeg", "demon-slayer.jpeg"]]
+        # random.shuffle(self.images)
         self.current_image_index = 0
         self.current_image = self.images[self.current_image_index]
         self.current_image.init_encoding(min(self.current_image.bits_that_can_store(0), self.total_bit_length), self.current_image_index)
