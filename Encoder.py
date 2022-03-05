@@ -1,5 +1,7 @@
 from Encryption import Encryption as GCM
 from Transcriber import Transcriber
+import shutil
+import os
 
 
 class Encoder:
@@ -10,6 +12,10 @@ class Encoder:
         self.mode = Encoder.MODES[mode]
         self.source_image_folder_path = source_image_folder_path
         self.destination_image_folder_path = destination_image_folder_path
+        if os.path.exists(self.destination_image_folder_path):
+            shutil.rmtree(self.destination_image_folder_path)
+        os.makedirs(self.destination_image_folder_path)
+
         self.gcm = GCM()
         self.gcm.make_key(password)
         self.transcriber = Transcriber(self.mode, source_image_folder_path, destination_image_folder_path)
@@ -20,11 +26,10 @@ class Encoder:
             encrypted = self.gcm.encrypt(file_bytes)
             tag = self.gcm.encrypt_finalize()
 
-        header = self.mode.to_bytes(1, 'big') + self.gcm.password_salt + self.gcm.iv
-        print(self.mode.to_bytes(1, 'big'))
-        print(self.gcm.password_salt)
-        print(self.gcm.iv)
-        print(header)
+        header = self.gcm.password_salt + self.gcm.iv
+        # print(self.gcm.password_salt)
+        # print(self.gcm.iv)
+        # print(header)
 
         full_length = len(header) + len(encrypted) + len(tag)
         if not self.transcriber.can_fit_bytes(full_length):
@@ -57,4 +62,4 @@ class Encoder:
 
 if __name__ == "__main__":
     enc = Encoder(b'password', './source_images', './destination_images')
-    enc.encode_file('input.txt')
+    enc.encode_file('source_images.zip')

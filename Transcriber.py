@@ -2,7 +2,7 @@ from PIL import Image
 import queue
 from os import path, listdir
 from StegImage import StegImage
-
+import random
 
 
 class Transcriber:
@@ -30,11 +30,9 @@ class Transcriber:
 
     def init_images(self):
         self.images = [StegImage(path.join(self.source_image_folder_path, image), path.join(self.destination_folder_path, image), self.mode) for image in listdir(self.source_image_folder_path)]
+        random.shuffle(self.images)
         self.current_image_index = 0
         self.current_image = self.images[self.current_image_index]
-        from pprint import pprint
-        pprint(vars(self))
-        print((self.current_image.bits_that_can_store(), self.total_bit_length))
         self.current_image.init_encoding(min(self.current_image.bits_that_can_store(), self.total_bit_length), self.current_image_index)
 
     def can_fit_bytes(self, bytes_to_save):
@@ -61,7 +59,7 @@ class Transcriber:
             image_can_store = self.current_image.bits_that_can_store()
             if bits_to_store > image_can_store:
                 self.current_image.set_next_pixels(self._encoding_queue)
-                self.current_image.finish_encoding()
+                self.current_image.finish_encoding(self._encoding_queue)
 
                 # udpate lengths
                 bits_to_store -= image_can_store

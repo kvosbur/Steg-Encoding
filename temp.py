@@ -4,7 +4,7 @@ import piexif
 # https://piexif.readthedocs.io/en/latest/sample.html
 
 
-image_name = 'temp.jpg'
+image_name = 'jujutsu.jpeg'
 
 image = Image.open(image_name)
 print(image.size)
