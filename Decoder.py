@@ -54,11 +54,7 @@ class Decoder:
         self.decode_header(raw_header)
         self.get_tag(raw_data)
 
-
         self.decrypt_and_save_data(raw_data, file_path)
-        # print(self.mode)
-        # print(self._data_length)
-
 
 
 if __name__ == "__main__":

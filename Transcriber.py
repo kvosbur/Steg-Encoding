@@ -1,5 +1,4 @@
 from PIL import Image
-import queue
 from os import path, listdir
 from StegImage import StegImage
 import random
@@ -15,7 +14,6 @@ class Transcriber:
         self.mode = mode
         self.source_image_folder_path = image_folder_path
         self.destination_folder_path = destination_folder_path
-        self._encoding_queue = queue.Queue()
         self.leftover = 0
         
 
@@ -31,6 +29,7 @@ class Transcriber:
 
     def init_images(self):
         self.images = [StegImage(path.join(self.source_image_folder_path, image), path.join(self.destination_folder_path, image), self.mode) for image in listdir(self.source_image_folder_path)]
+        # self.images = [StegImage(path.join(self.source_image_folder_path, image), path.join(self.destination_folder_path, image), self.mode) for image in ["my-hero.jpeg", "demon-slayer.jpeg"]]
         random.shuffle(self.images)
         self.current_image_index = 0
         self.current_image = self.images[self.current_image_index]
@@ -42,21 +41,12 @@ class Transcriber:
 
         can_fit = sum([image.bits_that_can_store(0) for image in self.images])
         return bytes_to_save * 8 <= can_fit
-
-
-    def _add_data_to_queue(self, data):
-        for byte in data:
-            self._encoding_queue.put(byte >> 6)
-            self._encoding_queue.put(byte >> 4 & 3)
-            self._encoding_queue.put(byte >> 2 & 3)
-            self._encoding_queue.put(byte & 3)
     
 
     def set_encoding(self, data_to_encode):
-        
         bits_to_store = len(data_to_encode) * 8
-        self._add_data_to_queue(data_to_encode)
         print('\n\n', "bits to store:", bits_to_store)
+        byte_index = 0
         
         while bits_to_store > 0:
             image_can_store = self.current_image.bits_that_can_store(self.leftover)
@@ -64,12 +54,13 @@ class Transcriber:
             print("image can store", image_can_store)
             if bits_to_store > image_can_store:
                 print("store max")
-                self.current_image.set_next_pixels(self._encoding_queue)
-                self.current_image.finish_encoding(self._encoding_queue)
+                self.leftover = self.current_image.encode_data(data_to_encode, byte_index, self.leftover)
+                self.current_image.finish_encoding()
 
                 # udpate lengths
                 bits_to_store -= image_can_store
                 self.total_bit_length -= image_can_store
+                byte_index += image_can_store // 8
 
                 # iterate current image
                 self.current_image_index += 1
@@ -77,12 +68,14 @@ class Transcriber:
                 self.current_image.init_encoding(min(image_can_store, self.total_bit_length), self.current_image_index)
             else:
                 print("store partial")
-                self.current_image.set_next_pixels(self._encoding_queue)
+                self.leftover = self.current_image.encode_data(data_to_encode, byte_index, self.leftover)
+                print("modulus", self.leftover)
                 self.total_bit_length -= bits_to_store
                 bits_to_store = 0
-            self.leftover = self._encoding_queue.qsize()
+                print("bits stored", self.current_image.bits_stored - (StegImage.header_size() * 8))
+                print("debugging leftover:", self.current_image.bits_that_can_store(self.leftover))
         
 
     def finish_encoding(self):
-        self.current_image.finish_encoding(self._encoding_queue)
+        self.current_image.finish_encoding()
 
