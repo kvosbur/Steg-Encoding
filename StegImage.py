@@ -15,6 +15,9 @@ class StegImage:
         self.bits_stored = 0
         self._x = 0
         self._y = 0
+
+    def __repr__(self) -> str:
+        return f"{self.source_image_path}"
         
     @staticmethod
     def header_size():
@@ -27,8 +30,8 @@ class StegImage:
         # assuming that I am only changing rgb and not rgba
         return (x * y * 3 * 2) - (StegImage.header_size() * 8)
 
-    def bits_that_can_store(self) -> int:
-        return self.total_bits_that_can_store() - self.bits_stored
+    def bits_that_can_store(self, queue_size) -> int:
+        return self.total_bits_that_can_store() - self.bits_stored - (queue_size * 2)
 
     def get_header_info(self, image_number):
         
@@ -44,7 +47,7 @@ class StegImage:
         self._image = Image.open(self.source_image_path)
         self._pixels = self._image.load()
         self.bit_length_to_store = bit_length_to_store
-        print(bit_length_to_store)
+        print("amount to store", bit_length_to_store)
 
         # store header info
         data = self.get_header_info(image_number)
@@ -74,9 +77,13 @@ class StegImage:
                     break
 
     def finish_encoding(self, encoding_queue):
-        if self.bits_that_can_store() != 0:
-            while encoding_queue.qsize() != 3:
+        print("bits stored before", self.bits_stored)
+        if self.bits_that_can_store(0) != 0:
+            while encoding_queue.qsize() % 3 != 0:
                 encoding_queue.put(0)
+            print("ADDING ", encoding_queue.qsize())
             self.set_next_pixels(encoding_queue)
+        print("bits stored", self.bits_stored)
+        print('\n')
         self._image.save(self.destination_image_path, format="PNG")
 
