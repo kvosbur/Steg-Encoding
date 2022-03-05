@@ -78,6 +78,7 @@ class Transcriber:
             else:
                 print("store partial")
                 self.current_image.set_next_pixels(self._encoding_queue)
+                self.total_bit_length -= bits_to_store
                 bits_to_store = 0
             self.leftover = self._encoding_queue.qsize()
         
