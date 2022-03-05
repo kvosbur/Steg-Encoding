@@ -40,6 +40,8 @@ class Encoder:
         # allowed_space = (self.transcriber.get_total_pixels() * 2) // 8
         # length_space = Transcriber.bytes_for_size(allowed_space)
 
+        print("full length", full_length, full_length * 8)
+
         self.transcriber.set_encoding(header)
         self.transcriber.set_encoding(encrypted)
         self.transcriber.set_encoding(tag)

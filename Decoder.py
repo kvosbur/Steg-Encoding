@@ -8,14 +8,14 @@ class Decoder:
     MODES = {'GCM': 8}
     MODE_LENGTH = 1
 
-    def __init__(self, password, image_path):
-        self.image_path = image_path
+    def __init__(self, password, image_folder_path):
+        self.image_folder_path = image_folder_path
         self.mode = None
         self._gcm = None
         self._password = password
         self._data_length = 0
 
-        self.extractor = Extractor(image_path)
+        self.extractor = Extractor(image_folder_path)
 
     def get_length_field_length(self):
         return Transcriber.bytes_for_size((self.extractor.get_total_pixels() * 2) // 8)
@@ -40,14 +40,15 @@ class Decoder:
 
     def decode_file(self, file_path):
 
-        raw_header = self.extractor.decode_image(self.get_header_length())
-        self.decode_header(raw_header)
+        self.extractor.load_images()
+        # raw_header = self.extractor.decode_image(self.get_header_length())
+        # self.decode_header(raw_header)
 
-        print(self.mode)
-        print(self._data_length)
+        # print(self.mode)
+        # print(self._data_length)
 
 
 
 if __name__ == "__main__":
-    enc = Decoder(b'password', 'test_path.png')
+    enc = Decoder(b'password', 'destination_images')
     enc.decode_file('input.txt')
