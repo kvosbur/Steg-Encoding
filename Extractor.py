@@ -21,5 +21,9 @@ class Extractor:
         sorted_images = sorted(self.images, key=lambda image: image.image_number)
         print(sorted_images)
 
-        for image in self.images:
-            data = image.decode_rest_of_image()
+        data = bytearray()
+        for image in sorted_images:
+            data += image.decode_rest_of_image()
+            print(len(data) * 8)
+
+        return data

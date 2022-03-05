@@ -25,6 +25,7 @@ class ExtractImage:
         self.num_bits = int.from_bytes(bytes(header_data[3:9]), 'big')
         print(self._decoding_queue.qsize())
         self.bits_read -= StegImage.header_size() * 8
+        self._internal_bytes = bytearray()
 
     def _get_next_pixel(self):
         r, g, b = self._pixels[self._x, self._y]
@@ -66,6 +67,9 @@ class ExtractImage:
         print("bits expect", self.num_bits)
         print("queue size", self._decoding_queue.qsize())
         print("size", self._image.size, "x", self._x, "y", self._y)
+        if self._decoding_queue.qsize() != 0:
+            print("THIS IS NOT GOING TO WORK")
+            exit()
         return self._internal_bytes
 
     def __repr__(self) -> str:

@@ -17,33 +17,43 @@ class Decoder:
 
         self.extractor = Extractor(image_folder_path)
 
-    def get_length_field_length(self):
-        return Transcriber.bytes_for_size((self.extractor.get_total_pixels() * 2) // 8)
-
     def get_header_length(self):
-        return Decoder.MODE_LENGTH + GCM.get_iv_length() + GCM.get_salt_length() + self.get_length_field_length()
+        return GCM.get_iv_length() + GCM.get_salt_length()
 
     def decode_header(self, raw_header):
         # assume raw_header is bytearray of values
-        self.mode = raw_header[0]
-        salt_end = GCM.get_salt_length() + 1
+        salt_end = GCM.get_salt_length()
         gcm_end = salt_end + GCM.get_iv_length()
-        password_salt = bytes(raw_header[1: salt_end])
+        password_salt = bytes(raw_header[: salt_end])
         iv = bytes(raw_header[salt_end: gcm_end])
 
         self._gcm = GCM(iv=iv, password_salt=password_salt)
         self._gcm.make_key(self._password)
         del self._password
 
-        self._data_length = int.from_bytes(bytes(raw_header[gcm_end: gcm_end + self.get_length_field_length()]),
-                                           byteorder='big', signed=False)
+    def get_tag(self, raw_data):
+        tag = bytes(raw_data[-GCM.get_tag_length():])
+        print(tag)
+        print(len(tag))
+        self._gcm.set_tag(tag)
+
+    def decrypt_and_save_data(self, raw_data, destination_file):
+        decrypted = self._gcm.decrypt(raw_data[self.get_header_length(): -GCM.get_tag_length()])
+        self._gcm.decrypt_finalize()
+
+        with open(destination_file, "wb") as f:
+            f.write(decrypted)
+
 
     def decode_file(self, file_path):
 
-        self.extractor.load_images()
-        # raw_header = self.extractor.decode_image(self.get_header_length())
-        # self.decode_header(raw_header)
+        raw_data = self.extractor.load_images()
+        raw_header = raw_data[:self.get_header_length()]
+        self.decode_header(raw_header)
+        self.get_tag(raw_data)
 
+
+        self.decrypt_and_save_data(raw_data, file_path)
         # print(self.mode)
         # print(self._data_length)
 
@@ -51,4 +61,4 @@ class Decoder:
 
 if __name__ == "__main__":
     enc = Decoder(b'password', 'destination_images')
-    enc.decode_file('input.txt')
+    enc.decode_file('output')
