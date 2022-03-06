@@ -33,9 +33,10 @@ class Encoder:
         header = self.gcm.password_salt + self.gcm.iv
 
         full_length = len(header) + len(encrypted) + len(tag)
-        if not self.transcriber.can_fit_bytes(full_length):
-            print("Not enough images to store the necessary data")
-            exit()
+        # if not self.transcriber.can_fit_bytes(full_length):
+        #     print("Not enough images to store the necessary data")
+        #     exit()
+        self.transcriber.choose_needed_images(full_length)
 
         print("full length", full_length, full_length * 8)
 

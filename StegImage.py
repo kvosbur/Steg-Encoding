@@ -200,6 +200,7 @@ class StegImage:
         return 0
 
     def finish_encoding(self):
-        print("saving image", self.destination_image_path)
+        print("saving image", self.destination_image_path, self.image_number)
         self._image.save(self.destination_image_path, format="PNG")
+        self._image.close()
 

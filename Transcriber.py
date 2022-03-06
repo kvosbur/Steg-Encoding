@@ -36,6 +36,21 @@ class Transcriber:
         can_fit = sum([image.bits_that_can_store() for image in self.images])
         print("can fit:", can_fit)
         return bytes_to_save * 8 <= can_fit
+
+    def choose_needed_images(self, required_bytes):
+        choices = [image for image in listdir(self.source_image_folder_path)]
+        self.total_bit_length = required_bytes * 8
+        required_bits = self.total_bit_length
+        self.images = []
+        while required_bits > 0:
+            next_image = random.choice(choices)
+            self.images.append(StegImage(path.join(self.source_image_folder_path, next_image), path.join(self.destination_folder_path, next_image), self.mode))
+            required_bits -= self.images[-1].bits_that_can_store()
+        
+        print(len(self.images))
+        self.current_image_index = 0
+        self.current_image = self.images[self.current_image_index]
+        self.current_image.init_encoding(min(self.current_image.bits_that_can_store(), self.total_bit_length), self.current_image_index)
     
     @staticmethod
     def do_parallel_image(image_source_path, image_destination_path, mode, bit_length_to_store, image_number, data_to_encode, byte_index, byte_offset):
@@ -49,43 +64,41 @@ class Transcriber:
         print("Encoding: ", bits_to_store)
         
         processes = []
-        with Pool(processes=6) as pool:
-            while bits_to_store > 0:
-                print("")
+        while bits_to_store > 0:
+            print("")
+            image_can_store = self.current_image.bits_that_can_store()
+            if bits_to_store > image_can_store:
+                print("storing full", self.current_image, image_can_store, self.current_image.bit_length_to_store)
+                temp = (self.current_image.source_image_path, self.current_image.destination_image_path, self.current_image.mode,
+                    self.current_image.bit_length_to_store, self.current_image.image_number, data_to_encode, byte_index, self.leftover,)
+                p = Process(target=Transcriber.do_parallel_image, args=temp)
+                if len(processes) == Transcriber.POOL_SIZE:
+                    processes[0].join()
+                    processes.pop(0)
+
+                p.start()
+                processes.append(p)
+
+                self.leftover = ((8 - (self.current_image.bit_length_to_store) % 8) + self.leftover) % 8
+
+                # udpate lengths
+                bits_to_store -= image_can_store
+                self.total_bit_length -= image_can_store
+                byte_index += image_can_store // 8
+
+                # iterate current image
+                self.current_image_index += 1
+                self.current_image = self.images[self.current_image_index]
                 image_can_store = self.current_image.bits_that_can_store()
-                if bits_to_store > image_can_store:
-                    print("storing full", self.current_image, image_can_store, self.current_image.bit_length_to_store)
-                    temp = (self.current_image.source_image_path, self.current_image.destination_image_path, self.current_image.mode,
-                        self.current_image.bit_length_to_store, self.current_image.image_number, data_to_encode, byte_index, self.leftover,)
-                    p = Process(target=Transcriber.do_parallel_image, args=temp)
-                    if len(processes) == Transcriber.POOL_SIZE:
-                        processes[0].join()
-                        processes.pop(0)
-
-                    p.start()
-                    processes.append(p)
-
-                    self.leftover = ((8 - (self.current_image.bit_length_to_store) % 8) + self.leftover) % 8
-
-                    # udpate lengths
-                    bits_to_store -= image_can_store
-                    self.total_bit_length -= image_can_store
-                    byte_index += image_can_store // 8
-
-                    # iterate current image
-                    self.current_image_index += 1
-                    self.current_image = self.images[self.current_image_index]
-                    image_can_store = self.current_image.bits_that_can_store()
-                    self.current_image.init_encoding(min(image_can_store, self.total_bit_length), self.current_image_index)
-                else:
-                    print("storing partial", self.current_image, bits_to_store, self.leftover)
-                    self.leftover = self.current_image.encode_data(data_to_encode, byte_index, self.leftover)
-                    self.total_bit_length -= bits_to_store
-                    bits_to_store = 0
-            
-            for p in processes:
-                p.join()
-
+                self.current_image.init_encoding(min(image_can_store, self.total_bit_length), self.current_image_index)
+            else:
+                print("storing partial", self.current_image, bits_to_store, self.leftover)
+                self.leftover = self.current_image.encode_data(data_to_encode, byte_index, self.leftover)
+                self.total_bit_length -= bits_to_store
+                bits_to_store = 0
+        
+        for p in processes:
+            p.join()
     def finish_encoding(self):
         self.current_image.finish_encoding()
 
