@@ -40,8 +40,8 @@ class StegImage:
         version_number = (self.mode | first_image_bit_mask).to_bytes(1, 'big')
         image_number_bytes = image_number.to_bytes(2, 'big')
         length_bytes = self.bit_length_to_store.to_bytes(6, 'big')
-        # print("header before convert", self.mode, image_number, self.bit_length_to_store)
-        # print("header", version_number + image_number_bytes + length_bytes)
+        print("header before convert", self.mode, image_number, self.bit_length_to_store)
+        print("header", version_number + image_number_bytes + length_bytes)
         return version_number + image_number_bytes + length_bytes
 
     def init_encoding(self, bit_length_to_store, image_number):

@@ -23,7 +23,7 @@ class Extractor:
 
         data = bytearray()
         for image in sorted_images:
-            data += image.decode_rest_of_image()
-            print(len(data) * 8)
+            data += image.decode_image()
+            print(image)
 
         return data
