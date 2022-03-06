@@ -28,8 +28,8 @@ class StegImage:
         # assuming that I am only changing rgb and not rgba
         return (x * y * 3 * 2) - (StegImage.header_size() * 8)
 
-    def bits_that_can_store(self, bits_left) -> int:
-        return self.total_bits_that_can_store() - self.bits_stored - (bits_left)
+    def bits_that_can_store(self) -> int:
+        return self.total_bits_that_can_store() - self.bits_stored
 
     def get_header_info(self, image_number):
         first_image_bit_mask = 128 if image_number == 0 else 0
@@ -59,10 +59,13 @@ class StegImage:
                 return None, None
         return x,y
 
+    def encode_data_with_finish(self, data, byte_index, byte_offset, header_offset = 72):
+        self.encode_data(data, byte_index, byte_offset, header_offset)
+        self.finish_encoding()
+
     def initial_offset(self, data, byte_index, offset, header_offset = 72):
         if offset == 0:
             return byte_index
-        print("DOING OFFSET WORK")
         pixel_start = ((self.bits_stored + header_offset) // 6)
         pixel_x = pixel_start // self.size_y
         pixel_y = pixel_start % self.size_y
@@ -101,15 +104,12 @@ class StegImage:
         return byte_index
 
     def encode_data(self, data, byte_index, byte_offset, header_offset = 72):
-        byte_index = self.initial_offset(data, byte_index, byte_offset)
+        new_byte_index = self.initial_offset(data, byte_index, byte_offset)
         pixel_start = ((self.bits_stored + header_offset) // 6)
         pixel_x = pixel_start // self.size_y
         pixel_y = pixel_start % self.size_y
         pixel_offset = (self.bits_stored % 6) // 2
-        if self.bits_stored % 8 != 0:
-            print("NOT GOING TO WORK")
-            exit()
-        for byte in data[byte_index:]:
+        for byte in data[new_byte_index:]:
             first = byte >> 6
             second = byte >> 4 & 3
             third = byte >> 2 & 3
@@ -196,9 +196,10 @@ class StegImage:
 
             self.bits_stored += 8
             if pixel_x is None:
-                    return 0
+                return 0
         return 0
 
     def finish_encoding(self):
+        print("saving image", self.destination_image_path)
         self._image.save(self.destination_image_path, format="PNG")
 

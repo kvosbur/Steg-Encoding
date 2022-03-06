@@ -16,6 +16,7 @@ class ExtractImage:
         self._y = 0
         self.val = 0
         self.offset = 0
+        self.num_bits = 0
 
     def get_header(self):
         self._image = Image.open(self.image_path)
@@ -28,8 +29,10 @@ class ExtractImage:
         self.bits_read -= StegImage.header_size() * 8
         self.header = header_data
         self._internal_bytes = bytearray()
+        print(self.image_path, self.size_x, self.size_y, self._image.size, self.num_bits)
 
     def decode_image(self, decode_header = False):
+        print("test value:", self.image_path, self.size_x, self.size_y, self._image.size, self.num_bits, "\n")
         offset = self.offset
         val = self.val
         while not (self._x == self.size_x and self._y == 0):
@@ -61,6 +64,9 @@ class ExtractImage:
                 val += ((b & 3) << 4)
                 offset = 2
             
+            self.offset = offset
+            self.val = val
+
             self.bits_read += 6
             self._y += 1
             if self._y == self.size_y:
@@ -70,12 +76,19 @@ class ExtractImage:
             if decode_header and len(self._internal_bytes) == StegImage.header_size():
                 return self._internal_bytes
             elif not decode_header and self.bits_read >= self.num_bits:
+                print("look for diff", self.image_path, offset, val, self.bits_read, self.num_bits)
                 return self._internal_bytes
 
-        self.val = val
-        self.offset = offset
+        print("bits read", self.bits_read, "out of:", self.num_bits)
         if offset != 0:
             print("NEED TO WORRY ABOUT OVERLAP")
+            print(not (self._x == self.size_x and self._y == 0))
+            print(self.size_x)
+            print(self.size_y)
+            print(self._image.size)
+            print(self._x)
+            print(self._y)
+            print(offset)
             exit()
 
     def __repr__(self) -> str:

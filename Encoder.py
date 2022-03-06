@@ -39,15 +39,14 @@ class Encoder:
 
         print("full length", full_length, full_length * 8)
 
-        self.transcriber.set_encoding(header)
-        self.transcriber.set_encoding(encrypted)
-        self.transcriber.set_encoding(tag)
+        self.transcriber.set_encoding(header + encrypted + tag)
+        with open("encode-test", "wb") as f:
+            f.write(header + encrypted + tag)
+        # self.transcriber.set_encoding(encrypted)
+        # self.transcriber.set_encoding(tag)
         self.transcriber.finish_encoding()
 
 if __name__ == "__main__":
-    
-    
-
     before = datetime.datetime.now()
     enc = Encoder(b'password', './source_images', './destination_images')
     # profile_result_file = "results"
@@ -57,7 +56,7 @@ if __name__ == "__main__":
     # p = pstats.Stats(profile_result_file)
     # p.strip_dirs().sort_stats(SortKey.CUMULATIVE).print_stats()
 
-    enc.encode_file('./source_images.zip')
+    enc.encode_file('./large.txt')
 
     after = datetime.datetime.now()
     total = after - before

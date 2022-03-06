@@ -49,6 +49,9 @@ class Decoder:
     def decode_file(self, file_path):
 
         raw_data = self.extractor.load_images()
+        with open("decode-test", "wb") as f:
+            f.write(raw_data)
+
         raw_header = raw_data[:self.get_header_length()]
         self.decode_header(raw_header)
         self.get_tag(raw_data)
