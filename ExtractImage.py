@@ -18,10 +18,17 @@ class ExtractImage:
         self.offset = 0
         self.num_bits = 0
 
-    def get_header(self):
+    def init_image(self):
         self._image = Image.open(self.image_path)
         self.size_x, self.size_y = self._image.size
         self._pixels = self._image.load()
+    
+    def close_image(self):
+        self._image.close()
+        self._image = None
+
+
+    def get_header(self):
         header_data = self.decode_image(decode_header=True)
         mode = int.from_bytes(bytes(header_data[:1]), 'big')
         self.image_number = int.from_bytes(bytes(header_data[1:3]), 'big')
@@ -29,9 +36,10 @@ class ExtractImage:
         self.bits_read -= StegImage.header_size() * 8
         self.header = header_data
         self._internal_bytes = bytearray()
-        print(self.image_path, self.size_x, self.size_y, self._image.size, self.num_bits)
+        # print(self.image_path, self.size_x, self.size_y, self._image.size, self.num_bits)
 
     def get_final_offset(self, given_offset):
+        self.init_image()
         offset = ((self.num_bits + (given_offset * 2)) % 8) // 2
         val = 0
         r, g, b = self._pixels[self.size_x - 1, self.size_y - 1]
@@ -44,9 +52,11 @@ class ExtractImage:
             val += ((r & 3) << 6) 
             val += ((g & 3) << 4) 
             val += ((b & 3) << 2) 
+        self.close_image()
         return offset, val
 
     def decode_image(self, decode_header = False):
+        self.init_image()
         offset = self.offset
         val = self.val
         while not (self._x == self.size_x and self._y == 0):
@@ -88,8 +98,10 @@ class ExtractImage:
                 self._y = 0
 
             if decode_header and len(self._internal_bytes) == StegImage.header_size():
+                self.close_image()
                 return self._internal_bytes
             elif not decode_header and self.bits_read >= self.num_bits:
+                self.close_image()
                 return self._internal_bytes
 
         print("bits read", self.bits_read, "out of:", self.num_bits)

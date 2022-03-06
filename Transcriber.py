@@ -4,7 +4,6 @@ from os import path, listdir
 from StegImage import StegImage
 from multiprocessing import Process, Pool
 import random
-import time
 
 
 class Transcriber:
@@ -44,8 +43,6 @@ class Transcriber:
         self.images = []
         while required_bits > 0:
             next_image = random.choice(choices)
-            if len(self.images) <= 1:
-                next_image = "silent-voice.jpeg"
             self.images.append(StegImage(path.join(self.source_image_folder_path, next_image), path.join(self.destination_folder_path, str(len(self.images)) + next_image), self.mode))
             temp = sum([image.bits_that_can_store() for image in self.images])
             print("current total:", temp, temp / 8, len(self.images), next_image)
@@ -98,6 +95,7 @@ class Transcriber:
 
                 # iterate current image
                 self.current_image_index += 1
+                self.current_image.close_image()
                 self.current_image = self.images[self.current_image_index]
                 image_can_store = self.current_image.bits_that_can_store()
                 self.current_image.init_encoding(min(image_can_store, self.total_bit_length), self.current_image_index)

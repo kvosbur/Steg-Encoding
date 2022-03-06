@@ -40,8 +40,8 @@ class Decoder:
 
     def decrypt_and_save_data(self, raw_data, destination_file):
         decrypted = self._gcm.decrypt(raw_data[self.get_header_length(): -GCM.get_tag_length()])
-        with open("temp", "wb") as f:
-            f.write(decrypted)
+        # with open("temp", "wb") as f:
+        #     f.write(decrypted)
         self._gcm.decrypt_finalize()
 
         with open(destination_file, "wb") as f:
@@ -51,8 +51,8 @@ class Decoder:
     def decode_file(self, file_path):
 
         raw_data = self.extractor.load_images()
-        with open("decode-test", "wb") as f:
-            f.write(raw_data)
+        # with open("decode-test", "wb") as f:
+        #     f.write(raw_data)
 
         raw_header = raw_data[:self.get_header_length()]
         self.decode_header(raw_header)

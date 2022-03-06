@@ -41,10 +41,8 @@ class Encoder:
         print("full length", full_length, full_length * 8)
 
         self.transcriber.set_encoding(header + encrypted + tag)
-        with open("encode-test", "wb") as f:
-            f.write(header + encrypted + tag)
-        # self.transcriber.set_encoding(encrypted)
-        # self.transcriber.set_encoding(tag)
+        # with open("encode-test", "wb") as f:
+        #     f.write(header + encrypted + tag)
         self.transcriber.finish_encoding()
 
 if __name__ == "__main__":

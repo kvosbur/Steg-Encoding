@@ -50,6 +50,9 @@ class StegImage:
         self.encode_data(data, 0, 0, header_offset=0)
         self.bits_stored = 0
 
+    def close_image(self):
+        self._image.close()
+
     def increment(self, x, y):
         y += 1
         if y == self.size_y:
