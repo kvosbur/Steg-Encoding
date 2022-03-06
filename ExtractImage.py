@@ -25,7 +25,6 @@ class ExtractImage:
         mode = int.from_bytes(bytes(header_data[:1]), 'big')
         self.image_number = int.from_bytes(bytes(header_data[1:3]), 'big')
         self.num_bits = int.from_bytes(bytes(header_data[3:9]), 'big')
-        print(mode, self.image_number, self.num_bits)
         self.bits_read -= StegImage.header_size() * 8
         self.header = header_data
         self._internal_bytes = bytearray()
@@ -78,7 +77,6 @@ class ExtractImage:
         if offset != 0:
             print("NEED TO WORRY ABOUT OVERLAP")
             exit()
-        return self._internal_bytes
 
     def __repr__(self) -> str:
         return f"{self.image_path} {self.image_number}"

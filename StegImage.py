@@ -13,8 +13,6 @@ class StegImage:
         self.destination_image_path = base + ".png"
         self.mode = mode
         self.bits_stored = 0
-        self._x = 0
-        self._y = 0
 
     def __repr__(self) -> str:
         return f"StegImage {self.source_image_path}"
@@ -31,26 +29,20 @@ class StegImage:
         return (x * y * 3 * 2) - (StegImage.header_size() * 8)
 
     def bits_that_can_store(self, bits_left) -> int:
-        print("total possible:", self.total_bits_that_can_store(), "bits stored: ", self.bits_stored, "bits_left:", bits_left)
         return self.total_bits_that_can_store() - self.bits_stored - (bits_left)
 
     def get_header_info(self, image_number):
-        
         first_image_bit_mask = 128 if image_number == 0 else 0
         version_number = (self.mode | first_image_bit_mask).to_bytes(1, 'big')
         image_number_bytes = image_number.to_bytes(2, 'big')
         length_bytes = self.bit_length_to_store.to_bytes(6, 'big')
-        print("header before convert", self.mode, image_number, self.bit_length_to_store)
-        print("header", version_number + image_number_bytes + length_bytes)
         return version_number + image_number_bytes + length_bytes
 
     def init_encoding(self, bit_length_to_store, image_number):
-        # print("init", self.source_image_path, image_number)
         self._image = Image.open(self.source_image_path)
         self.size_x, self.size_y = self._image.size
         self._pixels = self._image.load()
         self.bit_length_to_store = bit_length_to_store
-        # print("amount to store", bit_length_to_store)
 
         # store header info
         self.image_number = image_number
@@ -118,9 +110,6 @@ class StegImage:
             print("NOT GOING TO WORK")
             exit()
         for byte in data[byte_index:]:
-            # with open('debug' + str(self.image_number), "ab") as f:
-            #     f.write(byte.to_bytes(1, 'big'))
-            # print(byte, "before", pixel_x, pixel_y, pixel_offset, self.bits_stored)
             first = byte >> 6
             second = byte >> 4 & 3
             third = byte >> 2 & 3
@@ -208,12 +197,8 @@ class StegImage:
             self.bits_stored += 8
             if pixel_x is None:
                     return 0
-        # print("after", pixel_x, pixel_y, pixel_offset, self.bits_stored)
         return 0
 
     def finish_encoding(self):
-        print("dimensions", self._image.size)
-        print("bits stored", self.bits_stored + (StegImage.header_size() * 8))
-        print('\n')
         self._image.save(self.destination_image_path, format="PNG")
 

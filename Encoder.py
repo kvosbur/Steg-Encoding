@@ -31,9 +31,6 @@ class Encoder:
             tag = self.gcm.encrypt_finalize()
 
         header = self.gcm.password_salt + self.gcm.iv
-        # print(self.gcm.password_salt)
-        # print(self.gcm.iv)
-        # print(header)
 
         full_length = len(header) + len(encrypted) + len(tag)
         if not self.transcriber.can_fit_bytes(full_length):

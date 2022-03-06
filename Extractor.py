@@ -1,5 +1,3 @@
-from PIL import Image
-import queue
 from os import path, listdir
 from ExtractImage import ExtractImage
 
@@ -24,6 +22,6 @@ class Extractor:
         data = bytearray()
         for image in sorted_images:
             data += image.decode_image()
-            print(image)
+            print(image, image.bits_read)
 
         return data
