@@ -55,6 +55,7 @@ class Transcriber:
     @staticmethod
     def do_parallel_images(*args):
         print("STARTING PROCESS")
+        print(len(args))
         for (image_source_path, image_destination_path, mode, bit_length_to_store, image_number, max_images, data_to_encode, byte_index, byte_offset) in args:
             image = StegImage(image_source_path, image_destination_path, mode)
             image.init_encoding(bit_length_to_store, image_number, len(args))
@@ -63,7 +64,7 @@ class Transcriber:
     def set_encoding(self, data_to_encode):
         bits_to_store = len(data_to_encode) * 8
         byte_index = 0
-        step = len(self.images) // Transcriber.POOL_SIZE
+        step = max(len(self.images) // Transcriber.POOL_SIZE, 1)
         print("Encoding: ", bits_to_store)
         
         processes = []
@@ -77,6 +78,7 @@ class Transcriber:
                     self.current_image.bit_length_to_store, self.current_image.image_number, len(self.images), data_to_encode, byte_index, self.leftover)
                 args.append(temp)
                 if len(args) % step == 0:
+                    print("before", len(args))
                     p = Process(target=Transcriber.do_parallel_images, args=args)
                     p.start()
                     processes.append(p)
@@ -95,7 +97,7 @@ class Transcriber:
                 image_can_store = self.current_image.bits_that_can_store()
                 self.current_image.init_encoding(min(image_can_store, self.total_bit_length), self.current_image_index, len(self.images))
             else:
-                p = Process(target=Transcriber.do_parallel_images, args=temp)
+                p = Process(target=Transcriber.do_parallel_images, args=args)
                 p.start()
                 processes.append(p)
                 args = []

@@ -22,12 +22,12 @@ class Extractor:
         data = bytearray()
         prev_offset = 0
         prev_val = 0
-        for image in sorted_images:
+        for index, image in enumerate(sorted_images):
             image.offset = prev_offset
             image.val = prev_val
             data += image.decode_image()
             prev_offset = image.offset
             prev_val = image.val
-            print(image, image.bits_read, prev_val, prev_offset)
+            print(image, image.bits_read, prev_val, prev_offset, index / len(sorted_images))
 
         return data
