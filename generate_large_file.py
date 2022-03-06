@@ -2,11 +2,12 @@
 
 
 from string import ascii_letters
-size = len(ascii_letters)
-goal = 500000000 // size
+new_append = ascii_letters + "\n"
+size = len(new_append)
+goal = 3000000 // size
 
 with open("large.txt", "w") as f:
     current = 0
     while current < goal:
-        f.write(ascii_letters)
+        f.write(new_append)
         current += 1

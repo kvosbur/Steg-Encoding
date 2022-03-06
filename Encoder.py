@@ -57,7 +57,7 @@ if __name__ == "__main__":
     # p = pstats.Stats(profile_result_file)
     # p.strip_dirs().sort_stats(SortKey.CUMULATIVE).print_stats()
 
-    enc.encode_file('./source_images.zip')
+    enc.encode_file('./large.txt')
 
     after = datetime.datetime.now()
     total = after - before

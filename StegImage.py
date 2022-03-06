@@ -201,7 +201,7 @@ class StegImage:
         return 0
 
     def finish_encoding(self):
-        print("saving image", self.destination_image_path, f"{self.image_number}/{self.max_images}", (self.image_number / self.max_images) * 100)
+        print("saving image", self.destination_image_path)
         self._image.save(self.destination_image_path, format="PNG")
         self._image.close()
 

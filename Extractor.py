@@ -25,9 +25,13 @@ class Extractor:
         for index, image in enumerate(sorted_images):
             image.offset = prev_offset
             image.val = prev_val
+            predict_off, predict_val = image.get_final_offset(prev_offset)
             data += image.decode_image()
             prev_offset = image.offset
             prev_val = image.val
-            print(image, image.bits_read, prev_val, prev_offset, index / len(sorted_images))
+            
+            print(image, image.bits_read, prev_val, prev_offset, "{0:.0%}".format(index / len(sorted_images)))
+            print("predicted", predict_off, predict_val)
+            print("")
 
         return data
