@@ -38,11 +38,12 @@ class StegImage:
         length_bytes = self.bit_length_to_store.to_bytes(6, 'big')
         return version_number + image_number_bytes + length_bytes
 
-    def init_encoding(self, bit_length_to_store, image_number):
+    def init_encoding(self, bit_length_to_store, image_number, max_images):
         self._image = Image.open(self.source_image_path)
         self.size_x, self.size_y = self._image.size
         self._pixels = self._image.load()
         self.bit_length_to_store = bit_length_to_store
+        self.max_images = max_images
 
         # store header info
         self.image_number = image_number
@@ -200,7 +201,7 @@ class StegImage:
         return 0
 
     def finish_encoding(self):
-        print("saving image", self.destination_image_path, self.image_number)
+        print("saving image", self.destination_image_path, f"{self.image_number}/{self.max_images}", (self.image_number / self.max_images) * 100)
         self._image.save(self.destination_image_path, format="PNG")
         self._image.close()
 
